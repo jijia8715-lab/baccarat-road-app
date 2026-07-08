@@ -1,0 +1,939 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#7f0f1a" />
+  <title>百家樂五路分析紀律器</title>
+  <style>
+:root {
+  --bg: #16090b;
+  --panel: #261013;
+  --panel2: #331418;
+  --line: rgba(255,255,255,.11);
+  --text: #fff4ef;
+  --muted: #c8a9a7;
+  --red: #ff3158;
+  --red2: #b9142b;
+  --blue: #39b6ff;
+  --green: #30d17b;
+  --gold: #ffd166;
+  --cell: 26px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(255,49,88,.18), transparent 32rem),
+    radial-gradient(circle at bottom right, rgba(57,182,255,.11), transparent 26rem),
+    var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", Arial, sans-serif;
+}
+button, input { font: inherit; }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.app { width: min(1180px, 100%); margin: 0 auto; padding: 18px 14px 32px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+h1 { margin: 0; font-size: clamp(24px, 5vw, 38px); letter-spacing: -.02em; }
+h2 { margin: 0; font-size: 18px; }
+.eyebrow { color: var(--gold); text-transform: uppercase; letter-spacing: .12em; margin: 0 0 3px; font-size: 12px; }
+.panel {
+  background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.015)), var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 16px;
+  box-shadow: 0 18px 38px rgba(0,0,0,.22);
+}
+.hero { display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; align-items: center; margin-bottom: 14px; }
+.label { color: var(--muted); margin: 0 0 8px; }
+.signalMain { font-size: clamp(36px, 10vw, 72px); font-weight: 900; line-height: 1; letter-spacing: -.04em; }
+.signalMain.banker { color: var(--red); }
+.signalMain.player { color: var(--blue); }
+.signalMain.neutral { color: var(--gold); }
+.muted { color: var(--muted); margin: 8px 0 0; line-height: 1.5; }
+.small { font-size: 12px; }
+.scoreBox { background: rgba(0,0,0,.18); border-radius: 18px; padding: 14px; border: 1px solid var(--line); }
+.scoreLine { display: flex; justify-content: space-between; align-items: baseline; color: var(--muted); margin: 6px 0; }
+.scoreLine strong { color: var(--text); font-size: 24px; }
+.bar { height: 12px; background: rgba(255,255,255,.08); border-radius: 999px; overflow: hidden; margin-bottom: 10px; }
+.bar i { display: block; width: 50%; height: 100%; background: linear-gradient(90deg, var(--red2), var(--red)); transition: width .25s ease; }
+.bar.player i { background: linear-gradient(90deg, #12658f, var(--blue)); }
+.grade { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 7px 10px; color: var(--gold); background: rgba(255,209,102,.08); }
+.controlGrid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 14px; margin-bottom: 14px; }
+.inputPanel, .moneyPanel { min-height: 230px; }
+.btnRow { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.bigBtns { display: grid; grid-template-columns: repeat(3, 1fr); }
+.outcome { border: 0; color: white; border-radius: 18px; font-size: 24px; font-weight: 900; padding: 18px 8px; min-height: 76px; }
+.outcome.banker { background: linear-gradient(180deg, #ff4166, #b9142b); }
+.outcome.player { background: linear-gradient(180deg, #4dc7ff, #12658f); }
+.outcome.tie { background: linear-gradient(180deg, #3cde8b, #147b45); }
+.ghost, .dangerGhost, .primary {
+  border: 1px solid var(--line); background: rgba(255,255,255,.06); color: var(--text); border-radius: 14px; padding: 11px 13px; min-height: 43px;
+}
+.primary { background: linear-gradient(180deg, #ff3158, #a30f23); border-color: rgba(255,255,255,.16); font-weight: 800; }
+.dangerGhost { color: #ffb0bd; border-color: rgba(255,49,88,.35); }
+.hidden { display: none !important; }
+.countRow { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; color: var(--muted); }
+.countRow span { background: rgba(0,0,0,.16); padding: 8px 10px; border-radius: 12px; }
+.countRow b { color: var(--text); }
+.moneyGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
+input { width: 100%; border: 1px solid var(--line); background: rgba(0,0,0,.2); color: var(--text); border-radius: 12px; padding: 11px; outline: none; }
+input:focus { border-color: rgba(255,209,102,.5); }
+.profitBox { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+.profitBox div { background: rgba(0,0,0,.18); border-radius: 16px; padding: 12px; border: 1px solid var(--line); }
+.profitBox span { color: var(--muted); display: block; font-size: 13px; }
+.profitBox strong { display: block; margin-top: 4px; font-size: 24px; }
+.sectionTitle { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
+.pill { border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; background: rgba(255,255,255,.06); color: var(--gold); white-space: nowrap; }
+.patternCards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.patternCard { padding: 12px; border-radius: 16px; background: rgba(0,0,0,.17); border: 1px solid var(--line); min-height: 95px; }
+.patternCard.active { outline: 2px solid rgba(255,209,102,.45); background: rgba(255,209,102,.075); }
+.patternCard h3 { margin: 0 0 8px; font-size: 15px; }
+.patternCard p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.miniDots { display: flex; gap: 3px; margin-top: 10px; flex-wrap: wrap; }
+.miniDot { width: 12px; height: 12px; border-radius: 999px; border: 2px solid currentColor; }
+.miniDot.b { color: var(--red); }
+.miniDot.p { color: var(--blue); }
+.roads { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.roadPanel.wide { grid-column: span 3; }
+.road {
+  --cols: 28;
+  display: grid;
+  grid-template-rows: repeat(6, var(--cell));
+  grid-auto-flow: column;
+  grid-auto-columns: var(--cell);
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background:
+    linear-gradient(rgba(255,255,255,.075) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.075) 1px, transparent 1px),
+    rgba(0,0,0,.16);
+  background-size: var(--cell) var(--cell);
+  padding: 0;
+  min-height: calc(var(--cell) * 6 + 2px);
+}
+.road.big, .road.derived { grid-template-columns: repeat(34, var(--cell)); grid-auto-flow: unset; }
+.cell { width: var(--cell); height: var(--cell); display: grid; place-items: center; position: relative; }
+.mark { width: 18px; height: 18px; border-radius: 999px; border: 3px solid currentColor; display: block; background: transparent; }
+.mark.banker { color: var(--red); }
+.mark.player { color: var(--blue); }
+.mark.tie { color: var(--green); border-width: 0; background: var(--green); width: 13px; height: 13px; }
+.cell .tieCount { position: absolute; right: 1px; bottom: 0; color: var(--green); font-weight: 900; font-size: 11px; text-shadow: 0 1px 1px #000; }
+.tieSlash::after { content: ''; position: absolute; width: 22px; height: 3px; background: var(--green); transform: rotate(-45deg); border-radius: 99px; }
+.derived .mark { width: 14px; height: 14px; border-width: 3px; }
+.slashRoad .mark { border-radius: 4px; height: 4px; width: 18px; transform: rotate(-45deg); border-width: 0; background: currentColor; }
+.bottomGrid { align-items: start; }
+.statsGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.stat { background: rgba(0,0,0,.18); border-radius: 16px; padding: 12px; border: 1px solid var(--line); }
+.stat span { color: var(--muted); display: block; font-size: 12px; }
+.stat strong { display: block; font-size: 24px; margin-top: 3px; }
+.historyList { display: grid; gap: 8px; max-height: 320px; overflow: auto; }
+.historyItem { border: 1px solid var(--line); border-radius: 14px; padding: 10px; background: rgba(0,0,0,.16); }
+.historyItem b { color: var(--gold); }
+.historyItem p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+footer { color: var(--muted); text-align: center; font-size: 12px; padding: 18px 6px 0; }
+@media (max-width: 900px) {
+  :root { --cell: 23px; }
+  .hero, .controlGrid { grid-template-columns: 1fr; }
+  .moneyGrid { grid-template-columns: repeat(2, 1fr); }
+  .roads { grid-template-columns: 1fr; }
+  .roadPanel.wide { grid-column: span 1; }
+  .patternCards { grid-template-columns: repeat(2, 1fr); }
+  .statsGrid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .app { padding: 12px 10px 28px; }
+  .topbar { align-items: flex-start; }
+  .patternCards { grid-template-columns: 1fr; }
+  .moneyGrid, .profitBox, .statsGrid { grid-template-columns: 1fr 1fr; }
+  .bigBtns { gap: 8px; }
+  .outcome { min-height: 64px; font-size: 22px; }
+}
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Baccarat Road Discipline</p>
+        <h1>百家樂五路分析紀律器</h1>
+      </div>
+      <button id="installBtn" class="ghost hidden">安裝到手機</button>
+    </header>
+
+    <section class="hero panel">
+      <div class="heroLeft">
+        <p class="label">下一手訊號</p>
+        <div id="signalMain" class="signalMain neutral">觀察</div>
+        <p id="signalReason" class="muted">輸入至少 6 手非和局後開始判斷。</p>
+      </div>
+      <div class="scoreBox">
+        <div class="scoreLine">
+          <span>莊分</span>
+          <strong id="bankerScore">50</strong>
+        </div>
+        <div class="bar"><i id="bankerBar"></i></div>
+        <div class="scoreLine">
+          <span>閒分</span>
+          <strong id="playerScore">50</strong>
+        </div>
+        <div class="bar player"><i id="playerBar"></i></div>
+        <div id="grade" class="grade">等待資料</div>
+      </div>
+    </section>
+
+    <section class="controlGrid">
+      <div class="panel inputPanel">
+        <h2>輸入結果</h2>
+        <div class="btnRow bigBtns">
+          <button class="outcome banker" data-result="B">莊</button>
+          <button class="outcome player" data-result="P">閒</button>
+          <button class="outcome tie" data-result="T">和</button>
+        </div>
+        <div class="btnRow">
+          <button id="undoBtn" class="ghost">復原上一手</button>
+          <button id="clearBtn" class="dangerGhost">清空本靴</button>
+        </div>
+        <div class="countRow">
+          <span>總手數 <b id="totalCount">0</b></span>
+          <span>莊 <b id="bankerCount">0</b></span>
+          <span>閒 <b id="playerCount">0</b></span>
+          <span>和 <b id="tieCount">0</b></span>
+        </div>
+      </div>
+
+      <div class="panel moneyPanel">
+        <h2>停利停損 / 自動實戰紀錄</h2>
+        <div class="moneyGrid">
+          <label>本金<input id="bankrollInput" type="number" inputmode="decimal" value="10000"></label>
+          <label>單位注<input id="unitInput" type="number" inputmode="decimal" value="500"></label>
+          <label>停利<input id="takeProfitInput" type="number" inputmode="decimal" value="1500"></label>
+          <label>停損<input id="stopLossInput" type="number" inputmode="decimal" value="1000"></label>
+        </div>
+        <div class="profitBox">
+          <div><span>本靴盈虧</span><strong id="netProfit">0</strong></div>
+          <div><span>狀態</span><strong id="riskStatus">可觀察</strong></div>
+        </div>
+        <p id="autoModeText" class="grade">自動實戰紀錄：開啟</p>
+        <p id="pendingBetText" class="muted">輸入結果後，系統會自動把 A/B 級訊號登記成下一手下注紀錄；C/D 級自動略過。</p>
+      </div>
+    </section>
+
+    <section class="panel patternPanel">
+      <div class="sectionTitle">
+        <div>
+          <h2>路型分辨</h2>
+          <p class="muted">依照你圖片上的規律：長莊、長閒、單跳、雙跳、一莊兩閒、一閒兩莊、兩莊一閒、兩閒一莊、逢莊跳、逢閒跳、逢莊黐、逢閒黐。</p>
+        </div>
+        <div id="activePattern" class="pill">尚未成型</div>
+      </div>
+      <div id="patternCards" class="patternCards"></div>
+    </section>
+
+    <section class="roads">
+      <div class="panel roadPanel wide">
+        <div class="sectionTitle"><h2>珠盤路</h2><span class="muted">照順序記錄</span></div>
+        <div id="beadRoad" class="road bead"></div>
+      </div>
+      <div class="panel roadPanel wide">
+        <div class="sectionTitle"><h2>大路</h2><span class="muted">和局不斷路</span></div>
+        <div id="bigRoad" class="road big"></div>
+      </div>
+      <div class="panel roadPanel">
+        <div class="sectionTitle"><h2>大眼仔路</h2><span class="muted">規律參考</span></div>
+        <div id="bigEyeRoad" class="road derived"></div>
+      </div>
+      <div class="panel roadPanel">
+        <div class="sectionTitle"><h2>小路</h2><span class="muted">隔列規律</span></div>
+        <div id="smallRoad" class="road derived"></div>
+      </div>
+      <div class="panel roadPanel">
+        <div class="sectionTitle"><h2>蟑螂路</h2><span class="muted">更遠規律</span></div>
+        <div id="cockroachRoad" class="road derived slashRoad"></div>
+      </div>
+    </section>
+
+    <section class="controlGrid bottomGrid">
+      <div class="panel">
+        <div class="sectionTitle"><h2>勝率回測</h2><button id="runBacktestBtn" class="ghost">重新回測</button></div>
+        <div id="backtestBox" class="statsGrid"></div>
+        <p class="muted small">回測與實戰紀錄皆自動統計 A / B 級訊號；和局視為退回不算輸贏。</p>
+      </div>
+      <div class="panel">
+        <div class="sectionTitle"><h2>每靴紀錄</h2><button id="saveShoeBtn" class="ghost">儲存本靴</button></div>
+        <div id="shoeHistory" class="historyList"></div>
+      </div>
+    </section>
+
+    <footer>
+      <p>提醒：路單只能做紀律與型態判斷，不能保證下一手結果。此 APP 預設小注、停利停損、禁止追輸思維。</p>
+    </footer>
+  </div>
+
+  <script>
+const ROWS = 6;
+const MAX_COLS = 42;
+const STORAGE_KEY = 'baccarat-road-discipline-v1';
+
+const state = {
+  hands: [],
+  pendingBet: null,
+  net: 0,
+  bets: [],
+  history: [],
+  settings: { bankroll: 10000, unit: 500, takeProfit: 1500, stopLoss: 1000 }
+};
+
+const PATTERN_NAMES = [
+  '長莊', '長閒', '單跳', '雙跳', '一莊兩閒', '一閒兩莊', '兩莊一閒', '兩閒一莊', '逢莊跳', '逢閒跳', '逢莊黐', '逢閒黐'
+];
+
+function $(id) { return document.getElementById(id); }
+function money(n) { return (Math.round(n * 100) / 100).toLocaleString('zh-TW'); }
+function sideText(side) { return side === 'B' ? '莊' : side === 'P' ? '閒' : '和'; }
+function sideClass(side) { return side === 'B' ? 'banker' : side === 'P' ? 'player' : side === 'T' ? 'tie' : 'neutral'; }
+function getDecisive(hands = state.hands) { return hands.filter(h => h.result !== 'T').map(h => h.result); }
+function last(arr, n) { return arr.slice(Math.max(0, arr.length - n)); }
+function opposite(side) { return side === 'B' ? 'P' : side === 'P' ? 'B' : null; }
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    Object.assign(state, parsed);
+  } catch (err) { console.warn(err); }
+}
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function readSettings() {
+  state.settings.bankroll = Number($('bankrollInput').value || 0);
+  state.settings.unit = Number($('unitInput').value || 0);
+  state.settings.takeProfit = Number($('takeProfitInput').value || 0);
+  state.settings.stopLoss = Number($('stopLossInput').value || 0);
+  save();
+}
+function syncSettingsInputs() {
+  $('bankrollInput').value = state.settings.bankroll;
+  $('unitInput').value = state.settings.unit;
+  $('takeProfitInput').value = state.settings.takeProfit;
+  $('stopLossInput').value = state.settings.stopLoss;
+}
+
+function addHand(result) {
+  state.hands.push({ result, ts: Date.now() });
+  recalcAutoBets();
+  save();
+  render();
+}
+function undo() {
+  const removed = state.hands.pop();
+  if (!removed) return;
+  recalcAutoBets();
+  save();
+  render();
+}
+function clearShoe() {
+  if (state.hands.length || state.bets.length) saveCurrentShoe(false);
+  state.hands = [];
+  state.pendingBet = null;
+  state.net = 0;
+  state.bets = [];
+  save();
+  render();
+}
+function saveCurrentShoe(showAlert = true) {
+  if (!state.hands.length) return;
+  const bt = runBacktest(state.hands);
+  state.history.unshift({
+    id: Date.now(),
+    date: new Date().toLocaleString('zh-TW', { hour12: false }),
+    hands: state.hands.map(h => h.result).join(''),
+    total: state.hands.length,
+    net: state.net,
+    hitRate: bt.hitRate,
+    bets: state.bets.length
+  });
+  state.history = state.history.slice(0, 30);
+  save();
+  if (showAlert) alert('本靴已儲存。');
+}
+
+function createGrid(container, cols = 32) {
+  container.innerHTML = '';
+  container.style.gridTemplateRows = `repeat(${ROWS}, var(--cell))`;
+  container.style.gridTemplateColumns = `repeat(${cols}, var(--cell))`;
+  container.style.gridAutoFlow = 'unset';
+  const cells = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.style.gridColumn = c + 1;
+      cell.style.gridRow = r + 1;
+      container.appendChild(cell);
+      cells.push(cell);
+    }
+  }
+  return (r, c) => cells[r * cols + c];
+}
+function addMark(cell, side, tieCount = 0, slash = false) {
+  if (!cell) return;
+  const mark = document.createElement('span');
+  mark.className = `mark ${sideClass(side)}`;
+  cell.appendChild(mark);
+  if (slash) cell.classList.add('tieSlash');
+  if (tieCount > 0) {
+    const t = document.createElement('span');
+    t.className = 'tieCount';
+    t.textContent = tieCount;
+    cell.appendChild(t);
+  }
+}
+
+function renderBeadRoad() {
+  const cols = Math.max(10, Math.ceil(state.hands.length / ROWS) + 3);
+  const cellAt = createGrid($('beadRoad'), cols);
+  state.hands.forEach((h, i) => {
+    const c = Math.floor(i / ROWS);
+    const r = i % ROWS;
+    addMark(cellAt(r, c), h.result);
+  });
+}
+
+function buildBigRoad(hands = state.hands) {
+  const decisive = [];
+  const cells = [];
+  const map = new Map();
+  let lastSide = null;
+  let row = 0;
+  let col = 0;
+  let runStart = 0;
+  let runIndex = 0;
+  let lastCell = null;
+  let pendingTies = 0;
+
+  function occupied(r, c) { return map.has(`${r},${c}`); }
+  function put(side, tieCount = 0) {
+    const item = { side, row, col, tieCount, index: decisive.length };
+    cells.push(item);
+    map.set(`${row},${col}`, item);
+    decisive.push(side);
+    lastCell = item;
+  }
+
+  for (const h of hands) {
+    if (h.result === 'T') {
+      if (lastCell) lastCell.tieCount = (lastCell.tieCount || 0) + 1;
+      else pendingTies++;
+      continue;
+    }
+    const side = h.result;
+    if (!lastSide) {
+      row = 0; col = 0; runStart = 0; runIndex = 0;
+      put(side, pendingTies);
+      pendingTies = 0;
+    } else if (side === lastSide) {
+      if (row < ROWS - 1 && !occupied(row + 1, col)) row += 1;
+      else col += 1;
+      put(side);
+    } else {
+      runIndex += 1;
+      col = runIndex;
+      while (occupied(0, col)) col += 1;
+      row = 0;
+      runStart = col;
+      put(side);
+    }
+    lastSide = side;
+  }
+  return { cells, map, decisive };
+}
+
+function renderBigRoad() {
+  const road = buildBigRoad();
+  const cols = Math.max(18, Math.max(0, ...road.cells.map(x => x.col)) + 5);
+  const cellAt = createGrid($('bigRoad'), cols);
+  road.cells.forEach(x => addMark(cellAt(x.row, x.col), x.side, x.tieCount, x.tieCount > 0));
+}
+
+function columnHeights(cells) {
+  const heights = new Map();
+  cells.forEach(x => heights.set(x.col, Math.max(heights.get(x.col) || 0, x.row + 1)));
+  return heights;
+}
+function hasBigCell(map, r, c) { return map.has(`${r},${c}`); }
+
+function buildDerivedRoad(offset, hands = state.hands) {
+  const big = buildBigRoad(hands);
+  const heights = columnHeights(big.cells);
+  const colors = [];
+
+  big.cells.forEach(cell => {
+    const c = cell.col;
+    const r = cell.row;
+    if (r === 0) {
+      if (c < offset + 1) return;
+      const h1 = heights.get(c - 1) || 0;
+      const h2 = heights.get(c - 1 - offset) || 0;
+      colors.push(h1 === h2 ? 'R' : 'U');
+    } else {
+      if (c < offset) return;
+      colors.push(hasBigCell(big.map, r, c - offset) ? 'R' : 'U');
+    }
+  });
+  return placeColorRoad(colors);
+}
+
+function placeColorRoad(colors) {
+  const cells = [];
+  const occupied = new Set();
+  let lastColor = null, row = 0, col = 0, runIndex = 0;
+  colors.forEach(color => {
+    if (!lastColor) {
+      row = 0; col = 0; runIndex = 0;
+    } else if (color === lastColor) {
+      if (row < ROWS - 1 && !occupied.has(`${row + 1},${col}`)) row += 1;
+      else col += 1;
+    } else {
+      runIndex += 1;
+      col = runIndex;
+      while (occupied.has(`0,${col}`)) col += 1;
+      row = 0;
+    }
+    cells.push({ color, row, col });
+    occupied.add(`${row},${col}`);
+    lastColor = color;
+  });
+  return cells;
+}
+
+function renderDerived(id, offset) {
+  const cells = buildDerivedRoad(offset);
+  const cols = Math.max(12, Math.max(0, ...cells.map(x => x.col)) + 4);
+  const cellAt = createGrid($(id), cols);
+  cells.forEach(x => addMark(cellAt(x.row, x.col), x.color === 'R' ? 'B' : 'P'));
+}
+
+function runLength(seq) {
+  if (!seq.length) return 0;
+  const s = seq[seq.length - 1];
+  let n = 0;
+  for (let i = seq.length - 1; i >= 0 && seq[i] === s; i--) n++;
+  return n;
+}
+function isSingleJump(seq, n = 4) {
+  // 單跳：B P B P 或 P B P B，4 顆以上包含 4 顆。
+  if (seq.length < n) return false;
+  const s = last(seq, n);
+  for (let i = 1; i < s.length; i++) if (s[i] === s[i - 1]) return false;
+  return true;
+}
+function isDoubleJump(seq, n = 4) {
+  // 雙跳：B B P P 或 P P B B，4 顆以上包含 4 顆。
+  if (seq.length < n) return false;
+  const s = last(seq, n);
+  if (s.length % 2 !== 0) s.shift();
+  for (let i = 0; i < s.length; i += 2) {
+    if (s[i] !== s[i + 1]) return false;
+    if (i >= 2 && s[i] === s[i - 2]) return false;
+  }
+  return true;
+}
+function cycleMatch(seq, cycle, min = 6) {
+  if (seq.length < min) return false;
+  const s = last(seq, Math.min(seq.length, 9));
+  for (let start = 0; start < cycle.length; start++) {
+    let ok = true;
+    for (let i = 0; i < s.length; i++) {
+      if (s[i] !== cycle[(start + i) % cycle.length]) { ok = false; break; }
+    }
+    if (ok) return true;
+  }
+  return false;
+}
+function nextInCycle(seq, cycle) {
+  if (!seq.length) return null;
+  const s = last(seq, Math.min(seq.length, 9));
+  for (let start = 0; start < cycle.length; start++) {
+    let ok = true;
+    for (let i = 0; i < s.length; i++) {
+      if (s[i] !== cycle[(start + i) % cycle.length]) { ok = false; break; }
+    }
+    if (ok) return cycle[(start + s.length) % cycle.length];
+  }
+  return null;
+}
+function transitionStats(seq, from, to) {
+  let total = 0, hit = 0;
+  const recent = last(seq, 14);
+  for (let i = 0; i < recent.length - 1; i++) {
+    if (recent[i] === from) {
+      total++;
+      if (recent[i + 1] === to) hit++;
+    }
+  }
+  return { total, hit, rate: total ? hit / total : 0 };
+}
+
+function detectPatterns(hands = state.hands) {
+  const seq = getDecisive(hands);
+  const patterns = PATTERN_NAMES.map(name => ({ name, active: false, direction: null, strength: 0, note: '等待成型' }));
+  const set = (name, data) => Object.assign(patterns.find(p => p.name === name), data);
+  const rl = runLength(seq);
+  const current = seq[seq.length - 1];
+
+  if (current === 'B' && rl >= 4) set('長莊', { active: true, direction: 'B', strength: Math.min(30, 16 + rl * 3), note: `莊連 ${rl} 手，跟長不猜拐。` });
+  if (current === 'P' && rl >= 4) set('長閒', { active: true, direction: 'P', strength: Math.min(30, 16 + rl * 3), note: `閒連 ${rl} 手，跟長不猜拐。` });
+
+  if (isSingleJump(seq)) set('單跳', { active: true, direction: opposite(current), strength: 22, note: '近 4 手以上呈現 B/P 或 P/B 交錯。' });
+  if (isDoubleJump(seq)) {
+    const dir = rl >= 2 ? opposite(current) : current;
+    set('雙跳', { active: true, direction: dir, strength: 22, note: '近 4 手以上呈現 BB/PP 或 PP/BB 交錯。' });
+  }
+
+  if (cycleMatch(seq, ['B', 'P', 'P'])) set('一莊兩閒', { active: true, direction: nextInCycle(seq, ['B', 'P', 'P']), strength: 26, note: 'BPP 週期吻合。' });
+  if (cycleMatch(seq, ['P', 'B', 'B'])) set('一閒兩莊', { active: true, direction: nextInCycle(seq, ['P', 'B', 'B']), strength: 26, note: 'PBB 週期吻合。' });
+  if (cycleMatch(seq, ['B', 'B', 'P'])) set('兩莊一閒', { active: true, direction: nextInCycle(seq, ['B', 'B', 'P']), strength: 26, note: 'BBP 週期吻合。' });
+  if (cycleMatch(seq, ['P', 'P', 'B'])) set('兩閒一莊', { active: true, direction: nextInCycle(seq, ['P', 'P', 'B']), strength: 26, note: 'PPB 週期吻合。' });
+
+  const bj = transitionStats(seq, 'B', 'P');
+  if (bj.total >= 3 && bj.rate >= .75) set('逢莊跳', { active: true, direction: current === 'B' ? 'P' : null, strength: 14, note: `莊後跳閒 ${bj.hit}/${bj.total}。` });
+  const pj = transitionStats(seq, 'P', 'B');
+  if (pj.total >= 3 && pj.rate >= .75) set('逢閒跳', { active: true, direction: current === 'P' ? 'B' : null, strength: 14, note: `閒後跳莊 ${pj.hit}/${pj.total}。` });
+  const bs = transitionStats(seq, 'B', 'B');
+  if (bs.total >= 3 && bs.rate >= .75) set('逢莊黐', { active: true, direction: current === 'B' ? 'B' : null, strength: 14, note: `莊後黐莊 ${bs.hit}/${bs.total}。` });
+  const ps = transitionStats(seq, 'P', 'P');
+  if (ps.total >= 3 && ps.rate >= .75) set('逢閒黐', { active: true, direction: current === 'P' ? 'P' : null, strength: 14, note: `閒後黐閒 ${ps.hit}/${ps.total}。` });
+
+  return patterns;
+}
+
+function assess(hands = state.hands) {
+  const seq = getDecisive(hands);
+  const patterns = detectPatterns(hands);
+  if (seq.length < 6) {
+    return { direction: null, bankerScore: 50, playerScore: 50, grade: '等待資料', level: 'D', patterns, reason: '非和局至少 6 手後開始判斷。' };
+  }
+  let b = 0, p = 0, activeCount = 0;
+  const active = patterns.filter(x => x.active);
+  active.forEach(x => {
+    activeCount++;
+    if (x.direction === 'B') b += x.strength;
+    if (x.direction === 'P') p += x.strength;
+  });
+
+  // 下三路一致性只提高信心，不直接指定莊閒。
+  const coherence = derivedCoherence(hands);
+  const bonus = coherence >= 0.75 ? 8 : coherence >= 0.62 ? 4 : 0;
+  if (b > p) b += bonus;
+  if (p > b) p += bonus;
+
+  const total = Math.max(1, b + p);
+  const bankerScore = Math.round(50 + ((b - p) / total) * 45);
+  const playerScore = 100 - bankerScore;
+  let direction = null;
+  let score = 50;
+  if (bankerScore >= playerScore + 8) { direction = 'B'; score = bankerScore; }
+  else if (playerScore >= bankerScore + 8) { direction = 'P'; score = playerScore; }
+
+  let level = 'D', grade = '觀察', reason = '型態不明顯，跳過。';
+  if (direction && score >= 78 && activeCount >= 2) { level = 'A'; grade = 'A級 小注'; reason = `方向偏${sideText(direction)}，至少 ${activeCount} 個型態同向。`; }
+  else if (direction && score >= 65) { level = 'B'; grade = 'B級 輕倉'; reason = `方向偏${sideText(direction)}，但只建議小注。`; }
+  else if (activeCount) { level = 'C'; grade = 'C級 觀察'; reason = '有路型但訊號打架，暫不下注。'; }
+
+  const risk = getRiskStatus();
+  if (risk.blocked) {
+    level = 'D'; grade = '禁止下注'; direction = null; reason = risk.message;
+  }
+  return { direction, bankerScore: clamp(bankerScore, 0, 100), playerScore: clamp(playerScore, 0, 100), grade, level, patterns, reason, activeCount };
+}
+function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+function derivedCoherence(hands) {
+  const roads = [buildDerivedRoad(1, hands), buildDerivedRoad(2, hands), buildDerivedRoad(3, hands)];
+  const colors = roads.flatMap(r => r.slice(-6).map(x => x.color));
+  if (colors.length < 6) return 0;
+  const reds = colors.filter(x => x === 'R').length;
+  const blues = colors.length - reds;
+  return Math.max(reds, blues) / colors.length;
+}
+function getRiskStatus() {
+  const s = state.settings;
+  if (s.takeProfit > 0 && state.net >= s.takeProfit) return { blocked: true, message: `已達停利 +${money(s.takeProfit)}，建議收手。` };
+  if (s.stopLoss > 0 && state.net <= -Math.abs(s.stopLoss)) return { blocked: true, message: `已達停損 -${money(Math.abs(s.stopLoss))}，禁止再追。` };
+  return { blocked: false, message: '可觀察' };
+}
+
+
+function getRiskStatusForNet(net) {
+  const s = state.settings;
+  if (s.takeProfit > 0 && net >= s.takeProfit) return { blocked: true, message: `已達停利 +${money(s.takeProfit)}，建議收手。` };
+  if (s.stopLoss > 0 && net <= -Math.abs(s.stopLoss)) return { blocked: true, message: `已達停損 -${money(Math.abs(s.stopLoss))}，禁止再追。` };
+  return { blocked: false, message: '可觀察' };
+}
+function settleBetPreview(bet, result, settledIndex) {
+  let profit = 0;
+  let outcome = 'push';
+  if (result === 'T') {
+    profit = 0;
+    outcome = '和局退回';
+  } else if (result === bet.side) {
+    profit = bet.side === 'B' ? bet.amount * 0.95 : bet.amount;
+    outcome = 'win';
+  } else {
+    profit = -bet.amount;
+    outcome = 'loss';
+  }
+  return { ...bet, result, profit, outcome, settledAtHandIndex: settledIndex };
+}
+function createAutoBetFrom(hands, net) {
+  const risk = getRiskStatusForNet(net);
+  if (risk.blocked) return null;
+  const a = assessStatic(hands);
+  if (!a.direction || !['A', 'B'].includes(a.level)) return null;
+  const amount = state.settings.unit || 0;
+  if (amount <= 0) return null;
+  return { side: a.direction, amount, grade: a.level, createdAtHandIndex: hands.length, ts: Date.now(), auto: true };
+}
+function recalcAutoBets() {
+  readSettings();
+  let net = 0;
+  const bets = [];
+  let pending = null;
+  for (let i = 0; i < state.hands.length; i++) {
+    const result = state.hands[i].result;
+    if (pending) {
+      const settled = settleBetPreview(pending, result, i);
+      bets.push(settled);
+      net += settled.profit;
+      pending = null;
+    }
+    const beforeNext = state.hands.slice(0, i + 1);
+    pending = createAutoBetFrom(beforeNext, net);
+  }
+  state.net = net;
+  state.bets = bets;
+  state.pendingBet = pending;
+}
+function settlePendingBet(result) {
+  if (!state.pendingBet) return;
+  const bet = state.pendingBet;
+  let profit = 0;
+  let outcome = 'push';
+  if (result === 'T') {
+    profit = 0;
+    outcome = '和局退回';
+  } else if (result === bet.side) {
+    profit = bet.side === 'B' ? bet.amount * 0.95 : bet.amount;
+    outcome = 'win';
+  } else {
+    profit = -bet.amount;
+    outcome = 'loss';
+  }
+  state.net += profit;
+  state.bets.push({ ...bet, result, profit, outcome, settledAtHandIndex: state.hands.length });
+  state.pendingBet = null;
+}
+function takeSignal() {
+  readSettings();
+  const a = assess();
+  if (!a.direction || !['A', 'B'].includes(a.level)) {
+    alert('目前不是 A/B 級訊號，建議不要下注。');
+    return;
+  }
+  if (state.pendingBet) {
+    alert('已有待結算下注，請等下一手開出。');
+    return;
+  }
+  const amount = state.settings.unit || 0;
+  if (amount <= 0) {
+    alert('請先設定單位注。');
+    return;
+  }
+  state.pendingBet = { side: a.direction, amount, grade: a.level, createdAtHandIndex: state.hands.length, ts: Date.now() };
+  save();
+  render();
+}
+function skipBet() {
+  state.pendingBet = null;
+  save();
+  render();
+}
+
+function renderSignal() {
+  const a = assess();
+  const main = $('signalMain');
+  main.className = `signalMain ${a.direction ? sideClass(a.direction) : 'neutral'}`;
+  main.textContent = a.direction ? `打${sideText(a.direction)}` : '觀察';
+  $('signalReason').textContent = a.reason;
+  $('bankerScore').textContent = a.bankerScore;
+  $('playerScore').textContent = a.playerScore;
+  $('bankerBar').style.width = `${a.bankerScore}%`;
+  $('playerBar').style.width = `${a.playerScore}%`;
+  $('grade').textContent = a.grade;
+  const active = a.patterns.filter(p => p.active).map(p => p.name).join('、');
+  $('activePattern').textContent = active || '尚未成型';
+  renderPatternCards(a.patterns);
+}
+function renderPatternCards(patterns) {
+  const examples = {
+    '長莊': 'B B B B', '長閒': 'P P P P', '單跳': 'B P B P / P B P B', '雙跳': 'B B P P / P P B B',
+    '一莊兩閒': 'B P P / B P P', '一閒兩莊': 'P B B / P B B',
+    '兩莊一閒': 'B B P / B B P', '兩閒一莊': 'P P B / P P B',
+    '逢莊跳': 'B→P 比例高', '逢閒跳': 'P→B 比例高', '逢莊黐': 'B→B 比例高', '逢閒黐': 'P→P 比例高'
+  };
+  $('patternCards').innerHTML = patterns.map(p => {
+    const dots = (examples[p.name].match(/[BP]/g) || []).map(x => `<span class="miniDot ${x.toLowerCase()}"></span>`).join('');
+    const dir = p.direction ? `｜偏${sideText(p.direction)}` : '';
+    return `<div class="patternCard ${p.active ? 'active' : ''}">
+      <h3>${p.name}${dir}</h3>
+      <p>${p.note}</p>
+      <div class="miniDots">${dots}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderCounts() {
+  $('totalCount').textContent = state.hands.length;
+  $('bankerCount').textContent = state.hands.filter(h => h.result === 'B').length;
+  $('playerCount').textContent = state.hands.filter(h => h.result === 'P').length;
+  $('tieCount').textContent = state.hands.filter(h => h.result === 'T').length;
+}
+function renderMoney() {
+  $('netProfit').textContent = money(state.net);
+  $('netProfit').style.color = state.net > 0 ? '#30d17b' : state.net < 0 ? '#ff7890' : '';
+  const risk = getRiskStatus();
+  $('riskStatus').textContent = risk.message;
+  $('riskStatus').style.color = risk.blocked ? '#ff7890' : '#ffd166';
+  if (state.pendingBet) {
+    $('pendingBetText').textContent = `已自動登記下一手：${state.pendingBet.grade} 級，${money(state.pendingBet.amount)} 打${sideText(state.pendingBet.side)}。你只要繼續輸入下一手結果，系統會自動結算。`;
+  } else {
+    $('pendingBetText').textContent = '目前沒有 A/B 級可打訊號，系統自動略過，不會登記下注。';
+  }
+}
+function runBacktest(hands = state.hands) {
+  let wins = 0, losses = 0, pushes = 0, count = 0, units = 0;
+  for (let i = 0; i < hands.length - 1; i++) {
+    const before = hands.slice(0, i + 1);
+    const a = assessStatic(before);
+    if (!a.direction || !['A', 'B'].includes(a.level)) continue;
+    const next = hands[i + 1].result;
+    if (next === 'T') { pushes++; continue; }
+    count++;
+    if (next === a.direction) {
+      wins++;
+      units += a.direction === 'B' ? 0.95 : 1;
+    } else {
+      losses++;
+      units -= 1;
+    }
+  }
+  const hitRate = count ? wins / count : 0;
+  return { wins, losses, pushes, count, units, hitRate };
+}
+function assessStatic(hands) {
+  const originalHands = state.hands, originalNet = state.net;
+  // 靜態回測不套目前停利停損阻擋，避免中途狀態干擾。
+  const seq = getDecisive(hands);
+  const patterns = detectPatterns(hands);
+  if (seq.length < 6) return { direction: null, level: 'D' };
+  let b = 0, p = 0, activeCount = 0;
+  patterns.filter(x => x.active).forEach(x => {
+    activeCount++;
+    if (x.direction === 'B') b += x.strength;
+    if (x.direction === 'P') p += x.strength;
+  });
+  const coherence = derivedCoherence(hands);
+  const bonus = coherence >= 0.75 ? 8 : coherence >= 0.62 ? 4 : 0;
+  if (b > p) b += bonus;
+  if (p > b) p += bonus;
+  const total = Math.max(1, b + p);
+  const bankerScore = Math.round(50 + ((b - p) / total) * 45);
+  const playerScore = 100 - bankerScore;
+  let direction = null, score = 50;
+  if (bankerScore >= playerScore + 8) { direction = 'B'; score = bankerScore; }
+  else if (playerScore >= bankerScore + 8) { direction = 'P'; score = playerScore; }
+  let level = 'D';
+  if (direction && score >= 78 && activeCount >= 2) level = 'A';
+  else if (direction && score >= 65) level = 'B';
+  else if (activeCount) level = 'C';
+  return { direction, level };
+}
+function renderBacktest() {
+  const bt = runBacktest();
+  $('backtestBox').innerHTML = [
+    ['訊號次數', bt.count],
+    ['命中', bt.wins],
+    ['失手', bt.losses],
+    ['命中率', bt.count ? `${Math.round(bt.hitRate * 100)}%` : '—'],
+    ['和局退回', bt.pushes],
+    ['模擬單位盈虧', `${bt.units > 0 ? '+' : ''}${Math.round(bt.units * 100) / 100}`]
+  ].map(([k, v]) => `<div class="stat"><span>${k}</span><strong>${v}</strong></div>`).join('');
+}
+function renderHistory() {
+  if (!state.history.length) {
+    $('shoeHistory').innerHTML = '<p class="muted">尚無儲存紀錄。</p>';
+    return;
+  }
+  $('shoeHistory').innerHTML = state.history.map(h => `
+    <div class="historyItem">
+      <b>${h.date}</b>
+      <p>手數 ${h.total}｜實戰盈虧 ${money(h.net)}｜下注 ${h.bets} 次｜回測命中率 ${h.hitRate ? Math.round(h.hitRate * 100) + '%' : '—'}</p>
+      <p>${h.hands.slice(0, 80)}${h.hands.length > 80 ? '…' : ''}</p>
+    </div>
+  `).join('');
+}
+
+function render() {
+  renderCounts();
+  renderBeadRoad();
+  renderBigRoad();
+  renderDerived('bigEyeRoad', 1);
+  renderDerived('smallRoad', 2);
+  renderDerived('cockroachRoad', 3);
+  renderSignal();
+  renderMoney();
+  renderBacktest();
+  renderHistory();
+}
+
+function setup() {
+  load();
+  syncSettingsInputs();
+  document.querySelectorAll('.outcome').forEach(btn => btn.addEventListener('click', () => addHand(btn.dataset.result)));
+  $('undoBtn').addEventListener('click', undo);
+  $('clearBtn').addEventListener('click', () => { if (confirm('要清空本靴嗎？目前本靴會先存到紀錄。')) clearShoe(); });
+  $('saveShoeBtn').addEventListener('click', () => { recalcAutoBets(); saveCurrentShoe(true); });
+  $('runBacktestBtn').addEventListener('click', renderBacktest);
+  ['bankrollInput', 'unitInput', 'stopLossInput', 'takeProfitInput'].forEach(id => $(id).addEventListener('change', () => { recalcAutoBets(); save(); render(); }));
+
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    $('installBtn').classList.remove('hidden');
+  });
+  $('installBtn').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    $('installBtn').classList.add('hidden');
+  });
+
+  // 單檔手機版不需要 service worker。
+  recalcAutoBets();
+  save();
+  render();
+}
+setup();
+
+  </script>
+</body>
+</html>
