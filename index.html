@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#7f0f1a" />
+  <title>百家樂五路分析紀律器</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Baccarat Road Discipline</p>
+        <h1>百家樂五路分析紀律器</h1>
+      </div>
+      <button id="installBtn" class="ghost hidden">安裝到手機</button>
+    </header>
+
+    <section class="hero panel">
+      <div class="heroLeft">
+        <p class="label">下一手訊號</p>
+        <div id="signalMain" class="signalMain neutral">觀察</div>
+        <p id="signalReason" class="muted">輸入至少 6 手非和局後開始判斷。</p>
+      </div>
+      <div class="scoreBox">
+        <div class="scoreLine">
+          <span>莊分</span>
+          <strong id="bankerScore">50</strong>
+        </div>
+        <div class="bar"><i id="bankerBar"></i></div>
+        <div class="scoreLine">
+          <span>閒分</span>
+          <strong id="playerScore">50</strong>
+        </div>
+        <div class="bar player"><i id="playerBar"></i></div>
+        <div id="grade" class="grade">等待資料</div>
+      </div>
+    </section>
+
+    <section class="controlGrid">
+      <div class="panel inputPanel">
+        <h2>輸入結果</h2>
+        <div class="btnRow bigBtns">
+          <button class="outcome banker" data-result="B">莊</button>
+          <button class="outcome player" data-result="P">閒</button>
+          <button class="outcome tie" data-result="T">和</button>
+        </div>
+        <div class="btnRow">
+          <button id="undoBtn" class="ghost">復原上一手</button>
+          <button id="clearBtn" class="dangerGhost">清空本靴</button>
+        </div>
+        <div class="countRow">
+          <span>總手數 <b id="totalCount">0</b></span>
+          <span>莊 <b id="bankerCount">0</b></span>
+          <span>閒 <b id="playerCount">0</b></span>
+          <span>和 <b id="tieCount">0</b></span>
+        </div>
+      </div>
+
+      <div class="panel moneyPanel">
+        <h2>停利停損 / 實戰紀錄</h2>
+        <div class="moneyGrid">
+          <label>本金<input id="bankrollInput" type="number" inputmode="decimal" value="10000"></label>
+          <label>單位注<input id="unitInput" type="number" inputmode="decimal" value="500"></label>
+          <label>停利<input id="takeProfitInput" type="number" inputmode="decimal" value="1500"></label>
+          <label>停損<input id="stopLossInput" type="number" inputmode="decimal" value="1000"></label>
+        </div>
+        <div class="profitBox">
+          <div><span>本靴盈虧</span><strong id="netProfit">0</strong></div>
+          <div><span>狀態</span><strong id="riskStatus">可觀察</strong></div>
+        </div>
+        <div class="btnRow">
+          <button id="takeSignalBtn" class="primary">採用目前訊號下注</button>
+          <button id="skipBetBtn" class="ghost">略過</button>
+        </div>
+        <p id="pendingBetText" class="muted">尚無待結算下注。</p>
+      </div>
+    </section>
+
+    <section class="panel patternPanel">
+      <div class="sectionTitle">
+        <div>
+          <h2>路型分辨</h2>
+          <p class="muted">依照你圖片上的規律：長莊、長閒、單跳、雙跳、一莊兩閒、一閒兩莊、逢莊跳、逢閒跳、逢莊黐、逢閒黐。</p>
+        </div>
+        <div id="activePattern" class="pill">尚未成型</div>
+      </div>
+      <div id="patternCards" class="patternCards"></div>
+    </section>
+
+    <section class="roads">
+      <div class="panel roadPanel wide">
+        <div class="sectionTitle"><h2>珠盤路</h2><span class="muted">照順序記錄</span></div>
+        <div id="beadRoad" class="road bead"></div>
+      </div>
+      <div class="panel roadPanel wide">
+        <div class="sectionTitle"><h2>大路</h2><span class="muted">和局不斷路</span></div>
+        <div id="bigRoad" class="road big"></div>
+      </div>
+      <div class="panel roadPanel">
+        <div class="sectionTitle"><h2>大眼仔路</h2><span class="muted">規律參考</span></div>
+        <div id="bigEyeRoad" class="road derived"></div>
+      </div>
+      <div class="panel roadPanel">
+        <div class="sectionTitle"><h2>小路</h2><span class="muted">隔列規律</span></div>
+        <div id="smallRoad" class="road derived"></div>
+      </div>
+      <div class="panel roadPanel">
+        <div class="sectionTitle"><h2>蟑螂路</h2><span class="muted">更遠規律</span></div>
+        <div id="cockroachRoad" class="road derived slashRoad"></div>
+      </div>
+    </section>
+
+    <section class="controlGrid bottomGrid">
+      <div class="panel">
+        <div class="sectionTitle"><h2>勝率回測</h2><button id="runBacktestBtn" class="ghost">重新回測</button></div>
+        <div id="backtestBox" class="statsGrid"></div>
+        <p class="muted small">回測只統計 A / B 級訊號，和局視為退回不算輸贏。</p>
+      </div>
+      <div class="panel">
+        <div class="sectionTitle"><h2>每靴紀錄</h2><button id="saveShoeBtn" class="ghost">儲存本靴</button></div>
+        <div id="shoeHistory" class="historyList"></div>
+      </div>
+    </section>
+
+    <footer>
+      <p>提醒：路單只能做紀律與型態判斷，不能保證下一手結果。此 APP 預設小注、停利停損、禁止追輸思維。</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
